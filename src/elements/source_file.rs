@@ -22,10 +22,10 @@ pub struct SourceFile {
     #[serde(rename = "ExternalFormatDocumentation")]
     external_format_documentation: Option<ExternalFormatDocumentation>,
     #[serde(rename = "FileFormat")]
-    file_format: FileFormat,
-    #[serde(rename = "cvParam")]
+    file_format: Option<FileFormat>,
+    #[serde(rename = "cvParam", default)]
     pub cv_params: Vec<CvParam>,
-    #[serde(rename = "userParam")]
+    #[serde(rename = "userParam", default)]
     pub user_params: Vec<UserParam>,
 }
 
@@ -41,7 +41,9 @@ impl IsElement for SourceFile {
         if let Some(external_format_documentation) = &self.external_format_documentation {
             external_format_documentation.validate(strict)?;
         }
-        self.file_format.validate(strict)?;
+        if let Some(file_format) = &self.file_format {
+            file_format.validate(strict)?;
+        }
 
         self.validate_cv_params(strict)?;
 

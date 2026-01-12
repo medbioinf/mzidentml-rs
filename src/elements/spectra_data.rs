@@ -19,7 +19,7 @@ pub struct SpectraData {
     #[serde(rename = "ExternalFormatDocumentation")]
     pub external_format_documentation: Option<ExternalFormatDocumentation>,
     #[serde(rename = "FileFormat")]
-    pub file_format: FileFormat,
+    pub file_format: Option<FileFormat>,
     #[serde(rename = "SpectrumIDFormat")]
     pub spectrum_id_format: SpectrumIDFormat,
 }
@@ -36,7 +36,9 @@ impl IsElement for SpectraData {
         if let Some(external_format_documentation) = &self.external_format_documentation {
             external_format_documentation.validate(strict)?;
         }
-        self.file_format.validate(strict)?;
+        if let Some(file_format) = &self.file_format {
+            file_format.validate(strict)?;
+        }
 
         self.spectrum_id_format.validate(strict)
     }

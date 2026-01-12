@@ -9,12 +9,14 @@ use crate::{
 pub struct ContactRole {
     #[serde(rename = "@contact_ref")]
     pub contact_ref: String,
-    pub role: Role,
+    pub role: Option<Role>,
 }
 
 impl IsElement for ContactRole {
     fn validate(&self, strict: bool) -> Result<(), ValidationError> {
-        self.role.validate(strict)?;
+        if let Some(role) = &self.role {
+            role.validate(strict)?;
+        }
         Ok(())
     }
 }

@@ -20,13 +20,11 @@ pub struct MzIdentMl {
     pub xmlns: String,
     // This is a workaround to get xsi-attributes running, see:
     // https://github.com/tafia/quick-xml/issues/553#issuecomment-1432966843
-    #[serde(rename = "@xmlns:xsi")]
-    #[serde(alias = "@xsi")]
+    #[serde(rename = "@xmlns:xsi", alias = "@xsi", default)]
     pub xmlns_xsi: String,
     // This is a workaround to get xsi-attributes running, see:
     // https://github.com/tafia/quick-xml/issues/553#issuecomment-1432966843
-    #[serde(rename = "@xsi:schemaLocation")]
-    #[serde(alias = "@schemaLocation")]
+    #[serde(rename = "@xsi:schemaLocation", alias = "@schemaLocation", default)]
     pub xsi_schema_location: String,
     #[serde(rename = "@id")]
     pub id: String,

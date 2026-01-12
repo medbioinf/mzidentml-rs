@@ -7,7 +7,7 @@ use crate::{
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AuditCollection {
-    #[serde(rename = "Person")]
+    #[serde(rename = "Person", default)]
     pub persons: Vec<Person>,
     #[serde(rename = "Organization")]
     pub organizations: Vec<Organization>,
