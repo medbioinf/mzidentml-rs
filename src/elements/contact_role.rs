@@ -10,7 +10,7 @@ pub struct ContactRole {
     #[serde(rename = "@contact_ref")]
     pub contact_ref: String,
     #[serde(rename = "Role")]
-    pub role: Role,
+    pub role: Option<Role>,
 }
 
 impl IsElement for ContactRole {
@@ -22,7 +22,9 @@ impl IsElement for ContactRole {
         strict: bool,
         element_path: &mut Vec<String>,
     ) -> Result<(), ValidationError> {
-        self.role.validate(version, strict, element_path, None)?;
+        if let Some(role) = self.role.as_ref() {
+            role.validate(version, strict, element_path, None)?;
+        }
         Ok(())
     }
 }
