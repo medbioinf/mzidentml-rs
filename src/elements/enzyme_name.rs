@@ -25,21 +25,16 @@ impl IsElement for EnzymeName {
         strict: bool,
         element_path: &mut Vec<String>,
     ) -> Result<(), ValidationError> {
-        if self.cv_params.is_empty() {
-            return Err(ValidationError::ChildRequiredAtLeastOnce(
+        // Validation is differ from specs document at the time of writing
+        // https://github.com/HUPO-PSI/mzIdentML/issues/149#issuecomment-3761156439
+        if self.cv_params.is_empty() && self.user_params.is_empty() {
+            return Err(ValidationError::MissingChild(
                 Self::element_path_to_string(element_path),
-                "cvParam",
+                "cvParam|userParam",
             ));
         }
 
         self.validate_cv_params(version, strict, element_path)?;
-
-        if self.user_params.is_empty() {
-            return Err(ValidationError::ChildRequiredAtLeastOnce(
-                Self::element_path_to_string(element_path),
-                "userParam",
-            ));
-        }
 
         Self::validate_elements(version, strict, element_path, self.user_params.iter())?;
         Ok(())
