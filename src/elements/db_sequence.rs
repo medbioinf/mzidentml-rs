@@ -7,6 +7,7 @@ use crate::{
     },
     error::ValidationError,
     has_cv_params,
+    indexed_elements::is_indexed_element::IsIndexedSubelement,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -91,3 +92,9 @@ has_cv_params!(
         }
     ]
 );
+
+impl IsIndexedSubelement for DbSequence {
+    fn identifier(&self) -> &str {
+        &self.id
+    }
+}

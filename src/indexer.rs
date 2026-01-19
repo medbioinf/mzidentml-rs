@@ -704,9 +704,17 @@ pub fn event_to_str(event: &Event<'_>) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::File, io::BufReader};
+    use std::{
+        collections::{HashMap, HashSet},
+        fmt::Debug,
+        fs::File,
+        io::BufReader,
+    };
 
-    use crate::{indexer::Indexer, tests::MZID_FILE_PATHS};
+    use crate::{
+        error::ReadIndexedError, indexed_elements::is_indexed_element::IsIndexedSubelement,
+        indexer::Indexer, tests::MZID_FILE_PATHS,
+    };
 
     #[test]
     fn test_read() {
@@ -715,6 +723,74 @@ mod tests {
 
             let mzid_res = Indexer::read(&mut reader, None);
             assert!(mzid_res.is_ok(), "{path}: {}", mzid_res.unwrap_err());
+            let mzid = mzid_res.unwrap();
+            for list in mzid
+                .data_collection
+                .analysis_data
+                .spectrum_identification_lists
+                .iter()
+            {
+                test_subelements(
+                    list.spectrum_identification_results(&mut reader),
+                    &list.spectrum_identification_results_map,
+                );
+            }
+            if let Some(collection) = mzid.sequence_collection {
+                test_subelements(
+                    collection.db_sequences(&mut reader),
+                    &collection.db_sequences_map,
+                );
+                test_subelements(collection.peptides(&mut reader), &collection.peptides_map);
+                test_subelements(
+                    collection.peptide_evidences(&mut reader),
+                    &collection.peptide_evidence_map,
+                );
+            }
+
+            // let validation_res = mzid.validate_document(true);
+            // assert!(
+            //     validation_res.is_ok(),
+            //     "{path}: {}",
+            //     validation_res.unwrap_err()
+            // );
         }
+    }
+
+    /// Checks if all subelements are found and deserialized
+    ///
+    /// # Arguments
+    /// * `indexed_subelements` - Iterator of subelements
+    /// * `indexed_subelements_map` - Index of subelements
+    fn test_subelements<
+        T: IsIndexedSubelement + Debug,
+        I: Iterator<Item = Result<T, ReadIndexedError>>,
+    >(
+        indexed_subelements: I,
+        indexed_subelements_map: &HashMap<String, u64>,
+    ) {
+        let mut matching_elements: HashSet<String> =
+            HashSet::with_capacity(indexed_subelements_map.len());
+
+        for elem in indexed_subelements {
+            assert!(elem.is_ok(), "{:?}", elem.unwrap_err());
+            let elem = elem.unwrap();
+            assert!(
+                indexed_subelements_map.contains_key(elem.identifier()),
+                "{}[id] == {} not in subelement list",
+                T::ELEMENT_TAG,
+                elem.identifier()
+            );
+            matching_elements.insert(elem.identifier().to_string());
+        }
+
+        // Check if each element was actually deserialized.
+        assert_eq!(
+            matching_elements.len(),
+            indexed_subelements_map.len(),
+            "Only {} {} found from {} expected",
+            matching_elements.len(),
+            T::ELEMENT_TAG,
+            indexed_subelements_map.len()
+        );
     }
 }

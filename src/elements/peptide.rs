@@ -8,6 +8,7 @@ use crate::{
     },
     error::ValidationError,
     has_cv_params,
+    indexed_elements::is_indexed_element::IsIndexedSubelement,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -71,3 +72,9 @@ has_cv_params!(
         supplies_children: true,
     },]
 );
+
+impl IsIndexedSubelement for Peptide {
+    fn identifier(&self) -> &str {
+        &self.id
+    }
+}

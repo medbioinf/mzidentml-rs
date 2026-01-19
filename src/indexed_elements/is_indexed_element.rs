@@ -5,7 +5,7 @@ use crate::{
     error::ValidationError,
 };
 
-/// Trait to define common element behaviour. Most prominent validation
+/// Trait to define common behaviour for element which have indexed subelement. Most prominent validation
 pub trait IsIndexedElement: IsElement {
     /// Validates the mzML element.
     /// Add the current element to the path than and than call [inner_validate]
@@ -48,4 +48,11 @@ pub trait IsIndexedElement: IsElement {
         element_path: &mut Vec<String>,
         reader: &mut R,
     ) -> Result<(), ValidationError>;
+}
+
+/// Trait providing common behaviour for elements read on demand.
+pub trait IsIndexedSubelement: IsElement {
+    /// Returns identifier which is also used in the index
+    ///
+    fn identifier(&self) -> &str;
 }
