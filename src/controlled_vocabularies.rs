@@ -18,7 +18,7 @@ pub static UNKNOWN_CV_ERROR: CvError = CvError::UnknownCv;
 
 pub static MS_CVINDEX: LazyLock<Result<WrappedCvIndex<MS>, CvError>> = LazyLock::new(|| {
     let (cv_index, init_errors) = CVIndex::<MS>::init();
-    if !init_errors.is_empty() {
+    if cv_index.is_empty() {
         return Err(crate::error::CvError::IndexInit(
             MS::cv_name(),
             Arc::new(init_errors),
@@ -30,7 +30,7 @@ pub static MS_CVINDEX: LazyLock<Result<WrappedCvIndex<MS>, CvError>> = LazyLock:
 pub static UNIMOD_CVINDEX: LazyLock<Result<WrappedCvIndex<Unimod>, CvError>> =
     LazyLock::new(|| {
         let (cv_index, init_errors) = CVIndex::<Unimod>::init();
-        if !init_errors.is_empty() {
+        if cv_index.is_empty() {
             return Err(crate::error::CvError::IndexInit(
                 Unimod::cv_name(),
                 Arc::new(init_errors),
@@ -98,7 +98,7 @@ where
     }
 }
 
-/// Minimum represenation of CV terms for validation
+/// Minimum representation of CV terms for validation
 ///
 #[derive(Clone, Debug, Decode, Default, Encode)]
 pub struct CvDataWithChildren {
@@ -179,7 +179,7 @@ impl CVSource for MS {
             })
             .map(|obo| {
                 let version = obo.version();
-                // Map to temporarily store childrem IDs while creating items
+                // Map to temporarily store children IDs while creating items
                 let mut children_map: HashMap<usize, Vec<usize>> = HashMap::new();
                 let mut ms_data_items: Vec<Arc<CvDataWithChildren>> = obo
                     .objects
@@ -258,7 +258,7 @@ impl CVSource for Unimod {
             })
             .map(|obo| {
                 let version = obo.version();
-                // Map to temporarily store childrem IDs while creating items
+                // Map to temporarily store children IDs while creating items
                 let mut children_map: HashMap<usize, Vec<usize>> = HashMap::new();
                 let mut ms_data_items: Vec<Arc<CvDataWithChildren>> = obo
                     .objects
@@ -311,7 +311,7 @@ mod tests {
 
         let children = ms_cv.children_of(&1001456).unwrap();
 
-        // Search a n-th level child, e.g. software > analysis software > ProteoWizard software > ProteoWizard msconvert
+        // Search a nth level child, e.g. software > analysis software > ProteoWizard software > ProteoWizard msconvert
         let msconvert_term = children.iter().find(|term| term.index.unwrap() == 1002205);
         assert!(msconvert_term.is_some())
 

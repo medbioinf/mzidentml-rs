@@ -45,7 +45,7 @@ pub struct MzIdentMl<SC: IsSequenceCollection, SIL: IsSpectrumIdentificationList
 
     #[serde(rename = "@name")]
     pub name: Option<String>,
-    // TODO: implmement sem ver like struckt
+    // TODO: implement semver like struct
     #[serde(rename = "@version")]
     pub version: SemVer,
     #[serde(rename = "cvList")]

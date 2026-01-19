@@ -25,8 +25,8 @@ pub struct SearchModification {
     pub specificity_rules: Vec<SpecificityRules>,
 }
 
-// TODO: [Defintion](https://raw.githubusercontent.com/HUPO-PSI/mzIdentML/2aacf89e164afc96f71dee7e433c055718d7db0d/specification_document-releases/specdoc1_3/mzIdentML1.3.0-release.pdf#%5B%7B%22num%22%3A214%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C192.2%2C692.4%2C0%5D)
-// `MAY MS:1003392` needs to be validated accodringly over the complete document
+// TODO: [Definition](https://raw.githubusercontent.com/HUPO-PSI/mzIdentML/2aacf89e164afc96f71dee7e433c055718d7db0d/specification_document-releases/specdoc1_3/mzIdentML1.3.0-release.pdf#%5B%7B%22num%22%3A214%2C%22gen%22%3A0%7D%2C%7B%22name%22%3A%22XYZ%22%7D%2C192.2%2C692.4%2C0%5D)
+// `MAY MS:1003392` needs to be validated accordingly over the complete document
 impl IsElement for SearchModification {
     const ELEMENT_TAG: &str = "SearchModification";
 

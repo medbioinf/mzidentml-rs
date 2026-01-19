@@ -8,7 +8,7 @@ use crate::{
     has_cv_params,
 };
 
-// TODO: This might not be fully correct. SearchType is supposed to habe 1 CvParam and 1 UserParam. It might mis similar to SoftwareName.
+// TODO: This might not be fully correct. SearchType is supposed to have 1 CvParam and 1 UserParam. It might miss similar to SoftwareName.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SearchType {
     #[serde(default, rename = "cvParam")]

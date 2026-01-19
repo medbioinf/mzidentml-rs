@@ -7,7 +7,7 @@ use crate::{
 
 /// Trait to define common element behaviour. Most prominent validation
 pub trait IsIndexedElement: IsElement {
-    /// Validates the mzML element.
+    /// Validates the MzML element.
     /// Add the current element to the path than and than call [inner_validate]
     ///
     /// # Arguments

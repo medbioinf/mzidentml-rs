@@ -7,7 +7,7 @@ pub mod analysis_params;
 pub mod analysis_protocol_collection;
 pub mod analysis_software;
 pub mod analysis_software_list;
-/// Element attributes which contais more than basic types
+/// Element attributes which contains more than basic types
 pub mod attributes;
 pub mod audit_collection;
 pub mod bibliographic_reference;
@@ -97,7 +97,7 @@ pub static ALLOWED_SUBSTITUTION_RESIDUES: LazyLock<HashSet<char>> = LazyLock::ne
     residues.iter().cloned().collect()
 });
 
-// Elements to implment
+// Elements to implement
 // <MzIdentML>
 // <AdditionalSearchParams>
 // <Affiliation>

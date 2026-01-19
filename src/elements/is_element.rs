@@ -2,10 +2,10 @@ use crate::{elements::attributes::semver::SemVer, error::ValidationError};
 
 /// Trait to define common element behaviour. Most prominent validation
 pub trait IsElement {
-    /// Name of the elements tag in the mzIdentMl
+    /// Name of the elements tag in the mzIdentML
     const ELEMENT_TAG: &str;
 
-    /// Validates the mzML element.
+    /// Validates the MzML element.
     /// Add the current element to the path than and than call [inner_validate]
     ///
     /// # Arguments
@@ -45,7 +45,7 @@ pub trait IsElement {
         element_path: &mut Vec<String>,
     ) -> Result<(), ValidationError>;
 
-    /// Validated a couple of  (sub) elements
+    /// Validated a couple of (sub) elements
     ///
     /// * `version`- Document version
     /// * `strict` - If true, perform strict validation
