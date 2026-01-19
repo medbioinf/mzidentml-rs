@@ -41,13 +41,13 @@ has_cv_params!(
             cv_name: "MS",
             id: 1001412,
             occurence: CvParamOccurence::MustOnce,
-            supplies_children: true,
+            supplies_children: false,
         },
         CvParamRule {
             cv_name: "MS",
             id: 1001413,
             occurence: CvParamOccurence::MustOnce,
-            supplies_children: true,
+            supplies_children: false,
         }
     ]
 );
