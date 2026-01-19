@@ -746,13 +746,6 @@ mod tests {
                     &collection.peptide_evidence_map,
                 );
             }
-
-            // let validation_res = mzid.validate_document(true);
-            // assert!(
-            //     validation_res.is_ok(),
-            //     "{path}: {}",
-            //     validation_res.unwrap_err()
-            // );
         }
     }
 
@@ -792,5 +785,22 @@ mod tests {
             T::ELEMENT_TAG,
             indexed_subelements_map.len()
         );
+    }
+
+    #[test]
+    #[ignore = "Discrepancies between specificatio document and example."]
+    fn test_validation() {
+        for path in MZID_FILE_PATHS {
+            let mut reader = BufReader::new(File::open(path).unwrap());
+
+            let mzid = Indexer::read(&mut reader, None).unwrap();
+
+            let validation_res = mzid.validate_document(true, &mut reader);
+            assert!(
+                validation_res.is_ok(),
+                "{path}: {}",
+                validation_res.unwrap_err()
+            );
+        }
     }
 }

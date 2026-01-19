@@ -48,4 +48,20 @@ mod tests {
             assert!(mzid_res.is_ok(), "{path}: {}", mzid_res.unwrap_err());
         }
     }
+
+    #[test]
+    #[ignore = "Discrepancies between specificatio document and example."]
+    fn test_validation() {
+        for path in MZID_FILE_PATHS {
+            let reader = BufReader::new(File::open(path).unwrap());
+
+            let mzid = read(reader).unwrap();
+            let validation_res = mzid.validate_document(true);
+            assert!(
+                validation_res.is_ok(),
+                "{path}: {}",
+                validation_res.unwrap_err()
+            );
+        }
+    }
 }
