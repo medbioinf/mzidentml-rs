@@ -186,12 +186,6 @@ impl CVSource for MS {
                     .into_iter()
                     .filter(|o| o.stanza_type == OboStanzaType::Term)
                     .map(|obj| {
-                        if ["alternate mass", "ambiguous residues"]
-                            .contains(&&*obj.lines["name"][0].0.clone())
-                        {
-                            println!("{:?}", obj);
-                        }
-
                         let mut data = CvDataWithChildren {
                             index: obj.id.1.parse().ok(),
                             name: obj.lines["name"][0].0.clone(),
@@ -265,12 +259,6 @@ impl CVSource for Unimod {
                     .into_iter()
                     .filter(|o| o.stanza_type == OboStanzaType::Term)
                     .map(|obj| {
-                        if ["alternate mass", "ambiguous residues"]
-                            .contains(&&*obj.lines["name"][0].0.clone())
-                        {
-                            println!("{:?}", obj);
-                        }
-
                         let mut data = CvDataWithChildren {
                             index: obj.id.1.parse().ok(),
                             name: obj.lines["name"][0].0.clone(),
