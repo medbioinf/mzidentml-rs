@@ -12,7 +12,7 @@ exclude = [
 bincode = { version = "2.0", features = ["serde"] }
 chrono = "0.4.42"
 context_error = "0.2.0"
-mzcv = "0.2.0"
+mzcv = {version = "0.2.0", features = ["http"] }
 quick-xml = { version = "0.38.4", features = ["serialize", "overlapped-lists"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_path_to_error = "0.1.20"

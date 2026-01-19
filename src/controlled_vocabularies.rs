@@ -14,34 +14,56 @@ use mzcv::{
 
 use crate::error::CvError;
 
+/// Static error which can be reused without cloning
+///
 pub static UNKNOWN_CV_ERROR: CvError = CvError::UnknownCv;
 
-pub static MS_CVINDEX: LazyLock<Result<WrappedCvIndex<MS>, CvError>> = LazyLock::new(|| {
-    let (cv_index, init_errors) = CVIndex::<MS>::init();
-    if !init_errors.is_empty() {
-        return Err(crate::error::CvError::IndexInit(
-            MS::cv_name(),
-            Arc::new(init_errors),
-        ));
-    }
-    Ok(WrappedCvIndex(cv_index))
-});
+/// MS CV where CVData includes children
+///
+pub static MS_CVINDEX: LazyLock<Result<WrappedCvIndex<MS>, CvError>> =
+    LazyLock::new(WrappedCvIndex::init);
 
+/// Unimod CV where CVData includes children
+///
 pub static UNIMOD_CVINDEX: LazyLock<Result<WrappedCvIndex<Unimod>, CvError>> =
-    LazyLock::new(|| {
-        let (cv_index, init_errors) = CVIndex::<Unimod>::init();
-        if !init_errors.is_empty() {
-            return Err(crate::error::CvError::IndexInit(
-                Unimod::cv_name(),
-                Arc::new(init_errors),
-            ));
-        }
-        Ok(WrappedCvIndex(cv_index))
-    });
+    LazyLock::new(WrappedCvIndex::init);
 
+/// Wrapper around CvIndex to ease accessing children.
+///
 pub struct WrappedCvIndex<T: CVSource<Data = CvDataWithChildren>>(CVIndex<T>);
 
 impl<T: CVSource<Data = CvDataWithChildren>> WrappedCvIndex<T> {
+    /// Initializes CV
+    ///
+    pub fn init() -> Result<WrappedCvIndex<T>, CvError> {
+        let cv_index = if T::default_stem().with_extension("bin").is_file() {
+            let (cv_index, init_errors) = CVIndex::<T>::init();
+
+            if !init_errors.is_empty() {
+                return Err(crate::error::CvError::IndexInit(
+                    T::cv_name(),
+                    Arc::new(init_errors),
+                ));
+            }
+
+            cv_index
+        } else {
+            let mut cv_index = CVIndex::<T>::empty();
+
+            cv_index
+                .update_from_url(&[])
+                .map_err(|err| crate::error::CvError::Download(T::cv_name(), Arc::new(err)))?;
+
+            cv_index
+                .save_to_cache()
+                .map_err(|err| CvError::SaveToCache(T::cv_name(), Arc::new(err)))?;
+
+            cv_index
+        };
+
+        Ok(WrappedCvIndex(cv_index))
+    }
+
     /// Get children of the given term
     ///
     /// # Arguments
@@ -55,6 +77,11 @@ impl<T: CVSource<Data = CvDataWithChildren>> WrappedCvIndex<T> {
         self.inner_children_of(term.as_ref())
     }
 
+    /// Recursive inner function to get children of children
+    ///
+    /// # Arguments
+    /// * `term_id` - Numeric part of the term ID
+    ///
     fn inner_children_of(
         &self,
         term: &CvDataWithChildren,
@@ -81,12 +108,6 @@ impl<T: CVSource<Data = CvDataWithChildren>> WrappedCvIndex<T> {
     }
 }
 
-// .and_then(|child_term| {
-//     // Unwrap should be good here, as only terms with an ID can be found.
-//     let next_level_child_terms = self.children_of(child_term.index.unwrap())?;
-//     std::iter::once(child_term).chain(next_level_child_terms.into_iter())
-// })
-
 impl<T> Deref for WrappedCvIndex<T>
 where
     T: CVSource<Data = CvDataWithChildren>,
@@ -95,6 +116,17 @@ where
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl<T> std::fmt::Debug for WrappedCvIndex<T>
+where
+    T: CVSource<Data = CvDataWithChildren>,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WrappedCvIndex")
+            .field("cv", &T::cv_name())
+            .finish()
     }
 }
 
@@ -141,6 +173,65 @@ impl CVData for CvDataWithChildren {
     }
 }
 
+/// Parses a OBO file into CV with CvDataWithChildren
+///
+/// # Argument
+/// * `reader` - File reader
+///
+#[allow(clippy::type_complexity)]
+fn parse_obo_cv_with_children(
+    mut reader: impl Iterator<Item = HashBufReader<Box<dyn std::io::Read>, impl sha2::Digest>>,
+) -> Result<(CVVersion, Vec<Arc<CvDataWithChildren>>), Vec<BoxedError<'static, CVError>>> {
+    let reader = reader.next().unwrap();
+    OboOntology::from_raw(reader)
+        .map_err(|e| {
+            vec![
+                BoxedError::small(
+                    CVError::FileCouldNotBeParsed,
+                    e.get_short_description(),
+                    e.get_long_description(),
+                )
+                .add_contexts(e.get_contexts().iter().cloned()),
+            ]
+        })
+        .map(|obo| {
+            let version = obo.version();
+            // Map to temporarily store childrem IDs while creating items
+            let mut children_map: HashMap<usize, Vec<usize>> = HashMap::new();
+            let mut ms_data_items: Vec<Arc<CvDataWithChildren>> = obo
+                .objects
+                .into_iter()
+                .filter(|o| o.stanza_type == OboStanzaType::Term)
+                .map(|obj| {
+                    let mut data = CvDataWithChildren {
+                        index: obj.id.1.parse().ok(),
+                        name: obj.lines["name"][0].0.clone(),
+                        ..Default::default()
+                    };
+                    for parent in obj.is_a.iter() {
+                        if let Ok(parent_id) = parent.1.parse() {
+                            data.is_a.push(parent_id);
+                            if let Some(index) = data.index {
+                                children_map.entry(parent_id).or_default().push(index);
+                            }
+                        }
+                    }
+                    Arc::new(data)
+                })
+                .collect();
+
+            for item in ms_data_items.iter_mut() {
+                if let Some(index) = item.index
+                    && let Some(children) = children_map.get(&index)
+                {
+                    Arc::get_mut(item).unwrap().children = children.clone();
+                }
+            }
+
+            (version, ms_data_items)
+        })
+}
+
 /// Mass Spectrometry Ontology (MS)
 ///
 pub struct MS;
@@ -149,7 +240,7 @@ impl CVSource for MS {
     type Data = CvDataWithChildren;
     type Structure = Vec<Arc<CvDataWithChildren>>;
     fn cv_name() -> &'static str {
-        "MS"
+        "MS4mzIdentMl" // TODO: Rename once this is not overriding other CVs in the cache folder
     }
     fn files() -> &'static [CVFile] {
         &[CVFile {
@@ -163,56 +254,9 @@ impl CVSource for MS {
         None // TODO
     }
     fn parse(
-        mut reader: impl Iterator<Item = HashBufReader<Box<dyn std::io::Read>, impl sha2::Digest>>,
+        reader: impl Iterator<Item = HashBufReader<Box<dyn std::io::Read>, impl sha2::Digest>>,
     ) -> Result<(CVVersion, Self::Structure), Vec<BoxedError<'static, CVError>>> {
-        let reader = reader.next().unwrap();
-        OboOntology::from_raw(reader)
-            .map_err(|e| {
-                vec![
-                    BoxedError::small(
-                        CVError::FileCouldNotBeParsed,
-                        e.get_short_description(),
-                        e.get_long_description(),
-                    )
-                    .add_contexts(e.get_contexts().iter().cloned()),
-                ]
-            })
-            .map(|obo| {
-                let version = obo.version();
-                // Map to temporarily store childrem IDs while creating items
-                let mut children_map: HashMap<usize, Vec<usize>> = HashMap::new();
-                let mut ms_data_items: Vec<Arc<CvDataWithChildren>> = obo
-                    .objects
-                    .into_iter()
-                    .filter(|o| o.stanza_type == OboStanzaType::Term)
-                    .map(|obj| {
-                        let mut data = CvDataWithChildren {
-                            index: obj.id.1.parse().ok(),
-                            name: obj.lines["name"][0].0.clone(),
-                            ..Default::default()
-                        };
-                        for parent in obj.is_a.iter() {
-                            if let Ok(parent_id) = parent.1.parse() {
-                                data.is_a.push(parent_id);
-                                if let Some(index) = data.index {
-                                    children_map.entry(parent_id).or_default().push(index);
-                                }
-                            }
-                        }
-                        Arc::new(data)
-                    })
-                    .collect();
-
-                for item in ms_data_items.iter_mut() {
-                    if let Some(index) = item.index
-                        && let Some(children) = children_map.get(&index)
-                    {
-                        Arc::get_mut(item).unwrap().children = children.clone();
-                    }
-                }
-
-                (version, ms_data_items)
-            })
+        parse_obo_cv_with_children(reader)
     }
 }
 
@@ -222,7 +266,7 @@ impl CVSource for Unimod {
     type Data = CvDataWithChildren;
     type Structure = Vec<Arc<CvDataWithChildren>>;
     fn cv_name() -> &'static str {
-        "Unimod"
+        "Unimod4mzIdentMl" // TODO: Rename once this is not overriding other CVs in the cache folder
     }
     fn files() -> &'static [CVFile] {
         &[CVFile {
@@ -236,63 +280,17 @@ impl CVSource for Unimod {
         None // TODO
     }
     fn parse(
-        mut reader: impl Iterator<Item = HashBufReader<Box<dyn std::io::Read>, impl sha2::Digest>>,
+        reader: impl Iterator<Item = HashBufReader<Box<dyn std::io::Read>, impl sha2::Digest>>,
     ) -> Result<(CVVersion, Self::Structure), Vec<BoxedError<'static, CVError>>> {
-        let reader = reader.next().unwrap();
-        OboOntology::from_raw(reader)
-            .map_err(|e| {
-                vec![
-                    BoxedError::small(
-                        CVError::FileCouldNotBeParsed,
-                        e.get_short_description(),
-                        e.get_long_description(),
-                    )
-                    .add_contexts(e.get_contexts().iter().cloned()),
-                ]
-            })
-            .map(|obo| {
-                let version = obo.version();
-                // Map to temporarily store childrem IDs while creating items
-                let mut children_map: HashMap<usize, Vec<usize>> = HashMap::new();
-                let mut ms_data_items: Vec<Arc<CvDataWithChildren>> = obo
-                    .objects
-                    .into_iter()
-                    .filter(|o| o.stanza_type == OboStanzaType::Term)
-                    .map(|obj| {
-                        let mut data = CvDataWithChildren {
-                            index: obj.id.1.parse().ok(),
-                            name: obj.lines["name"][0].0.clone(),
-                            ..Default::default()
-                        };
-                        for parent in obj.is_a.iter() {
-                            if let Ok(parent_id) = parent.1.parse() {
-                                data.is_a.push(parent_id);
-                                if let Some(index) = data.index {
-                                    children_map.entry(parent_id).or_default().push(index);
-                                }
-                            }
-                        }
-                        Arc::new(data)
-                    })
-                    .collect();
-
-                for item in ms_data_items.iter_mut() {
-                    if let Some(index) = item.index
-                        && let Some(children) = children_map.get(&index)
-                    {
-                        Arc::get_mut(item).unwrap().children = children.clone();
-                    }
-                }
-
-                (version, ms_data_items)
-            })
+        parse_obo_cv_with_children(reader)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::MS_CVINDEX;
+    use super::*;
 
+    // Checks if childs if a term are correctly returned
     #[test]
     fn test_children_of() {
         let ms_cv = MS_CVINDEX.as_ref().unwrap();
@@ -304,5 +302,16 @@ mod tests {
         assert!(msconvert_term.is_some())
 
         // Not checking any numbers as this constantly change when the CV is updated
+    }
+
+    /// Just test the correct initilization
+    ///
+    #[test]
+    fn test_init() {
+        let ms_cv = MS_CVINDEX.as_ref();
+        assert!(ms_cv.is_ok(), "{:?}", ms_cv.unwrap_err().clone());
+
+        let unimod_cv = UNIMOD_CVINDEX.as_ref();
+        assert!(unimod_cv.is_ok(), "{:?}", unimod_cv.expect_err("{:?}"));
     }
 }

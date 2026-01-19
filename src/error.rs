@@ -81,6 +81,18 @@ pub enum CvError {
         &'static str,
         Arc<Vec<context_error::BoxedError<'static, mzcv::CVError>>>,
     ),
+    #[error("Unable to save CV `{0}` to cache, because of the following reasons: {1:?}")]
+    SaveToCache(
+        &'static str,
+        Arc<context_error::BoxedError<'static, mzcv::CVError>>,
+    ),
+    #[error(
+        "Unable to initialize CV `{0}` from inline ressource, because of the following reasons: {1:?}"
+    )]
+    Download(
+        &'static str,
+        Arc<context_error::BoxedError<'static, mzcv::CVError>>,
+    ),
     #[error("Unknown CV")]
     UnknownCv,
     #[error("Unknown CV term: `{0}:{1}`. Maybe the CV source is outdated?")]
