@@ -60,12 +60,13 @@ has_cv_params!(
     SearchModification,
     cv_params,
     [
-        CvParamRule {
-            cv_name: "MS",
-            id: 1001460,
-            occurence: CvParamOccurence::MustOnce,
-            supplies_children: false,
-        },
+        // TODO: Uncomment / fix as soon as https://github.com/HUPO-PSI/mzIdentML/issues/151 is closed
+        // CvParamRule {
+        //     cv_name: "MS",
+        //     id: 1001460,
+        //     occurence: CvParamOccurence::MustOnce,
+        //     supplies_children: false,
+        // },
         CvParamRule {
             cv_name: "MS",
             id: 1003392,
