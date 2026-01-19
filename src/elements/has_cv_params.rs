@@ -38,7 +38,7 @@ pub struct CvParamRule {
     pub cv_name: &'static str,
     /// Second part of the term ID, e.g. MS:1001191 => 1001191
     pub id: usize,
-    /// How many times the term may be useed
+    /// How many times the term may be used
     pub occurence: CvParamOccurence,
     /// If true the term's children are used
     pub supplies_children: bool,
@@ -317,7 +317,7 @@ impl Display for CvParamRule {
 /// Trait to deal with validation of cvParams
 ///
 pub trait HasCvParams: IsElement {
-    /// CV rules applying to a Element
+    /// CV rules applying to an Element
     ///
     const CV_PARAM_RULES: &[CvParamRule];
 
@@ -325,7 +325,7 @@ pub trait HasCvParams: IsElement {
     ///
     fn cv_params(&self) -> impl Iterator<Item = &CvParam>;
 
-    /// Returnes the rules for cvParams
+    /// Returns the rules for cvParams
     ///
     fn cv_param_rules() -> &'static [CvParamRule] {
         Self::CV_PARAM_RULES
@@ -370,7 +370,7 @@ pub trait HasCvParams: IsElement {
     }
 }
 
-/// This macro generates the implementation of the `HasCvParams` trait for the given struct which has mutliple cvParams
+/// This macro generates the implementation of the `HasCvParams` trait for the given struct which has multiple cvParams
 ///
 /// # Arguments
 /// * `$name` - The name of the struct for which the implementation is being generated.

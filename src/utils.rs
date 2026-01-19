@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use crate::error::CvError;
 
 /// Splits a CV term's accession / id into the CV name and id part.
-/// Accession is expeted in `<cv_name>:<id>`
+/// Accession is expected in `<cv_name>:<id>`
 ///
 /// # Arguments
 /// * `accession` - Term's accession / id

@@ -11,9 +11,9 @@ pub struct Cv {
     #[serde(rename = "@fullName")]
     pub full_name: String,
     #[serde(rename = "@version")]
-    pub version: Option<String>, // TODO: Implement sem ver like struct
+    pub version: Option<String>, // TODO: Implement semver like struct
     #[serde(rename = "@uri")]
-    pub uri: String, // TODO: Proper uri check
+    pub uri: String, // TODO: Proper URI check
 }
 
 impl IsElement for Cv {

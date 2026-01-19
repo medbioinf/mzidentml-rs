@@ -36,7 +36,7 @@ pub type IndexedMzIdentMl = MzIdentMl<SequenceCollection, SpectrumIdentification
 pub type IndexedDataColletion = DataCollection<SpectrumIdentificationList>;
 pub type IndexedAnalysisData = AnalysisData<SpectrumIdentificationList>;
 
-/// Reads an mzIdenML only partially. DBSequence, Peptide, PeptideEvidence and SpectrumIdentificationResult are indexed and get deserialized on demand.
+/// Reads an mzIdentML only partially. DBSequence, Peptide, PeptideEvidence and SpectrumIdentificationResult are indexed and get deserialized on demand.
 /// The parent elements of the indexed elements provide methods to access those elements.
 /// Use [read] to create the IndexedMzIdentML
 ///
@@ -90,7 +90,7 @@ impl<'a, R: Seek + BufRead> Indexer<'a, R> {
             .map_err(IndexingError::Xml)
     }
 
-    /// Creaets the index
+    /// Creates the index
     ///
     fn create_idx(&mut self) -> Result<IndexedMzIdentMl, IndexingError> {
         let mut xmlns: Option<String> = None;
@@ -115,11 +115,11 @@ impl<'a, R: Seek + BufRead> Indexer<'a, R> {
         loop {
             let event = self.read_event()?.into_owned();
             match event {
-                // Process the various elements. Some of them are just read to their endtag and get serialized in one. Some of them get special indexing function to index the some of the child elements.
+                // Process the various elements. Some of them are just read to their end tag and get serialized in one. Some of them get special indexing function to index the some of the child elements.
                 // Start event with ByteStart is an opening tag `<Tag attr1="1" ... attrN>`
                 quick_xml::events::Event::Start(ref e) => match e.local_name().as_ref() {
                     b"MzIdentML" => {
-                        // Deserialize the mzIdentMl attributes
+                        // Deserialize the mzIdentML attributes
                         for attr in e.attributes() {
                             let attr = attr.map_err(IndexingError::Attribute)?;
                             match attr.key.local_name().as_ref() {
@@ -303,7 +303,7 @@ impl<'a, R: Seek + BufRead> Indexer<'a, R> {
         Ok(deserialized_element)
     }
 
-    /// Reads the xml until the matching end tag to the given start tag occures and deserializes into T.
+    /// Reads the xml until the matching end tag to the given start tag occurs and deserializes into T.
     ///
     /// # Attributes
     /// `start` - Start event with StartBytes
@@ -358,7 +358,7 @@ impl<'a, R: Seek + BufRead> Indexer<'a, R> {
         Ok(deserialized_element)
     }
 
-    /// Reads the given sequence collection to the end and serializes it with DBSeqeunce, Peptide and PeptideEvicence only indexed.
+    /// Reads the given sequence collection to the end and serializes it with DBSequence, Peptide and PeptideEvicence only indexed.
     ///
     /// # Attributes
     /// `start` - Start event with StartBytes

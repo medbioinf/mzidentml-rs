@@ -11,7 +11,7 @@ use crate::{
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SoftwareName {
     #[serde(default, rename = "cvParam")]
-    pub cv_params: Vec<CvParam>, // TODO: Actually only one is allowed, but has_cv_params! accept only vec fields now.
+    pub cv_params: Vec<CvParam>, // TODO: Actually only one is allowed, but has_cv_params! accepts only Vec fields now.
     #[serde(default, rename = "userParam")]
     pub user_params: Vec<UserParam>,
 }
